@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class HomeApi {
-  // 首页数据
   static Future<http.Response> QHToken({String sing = ''}) async {
     var url = Uri.parse('https://api.next.bspapp.com/client');
     var headers = {
@@ -19,7 +18,6 @@ class HomeApi {
       "timestamp": '1712253493717'
     };
     var res = await http.post(url, headers: headers, body: jsonEncode(data));
-
     if (jsonDecode(res.body)["data"] == null) {
       return HomeApi.QHToken(
           sing: jsonDecode(res.body)["error"]["message"].split('is: ')[1]);
@@ -52,4 +50,25 @@ class HomeApi {
     }
     // 设置请求体
   }
-} 
+
+  static Future<http.Response> FZData() async {
+    var url = Uri.parse(
+        'https://slb.weilianmenggz.cn/api/old/parent/class/index?page=1&page_size=5000');
+    var headers = {
+      'app-origin': 'wx09113ce8ec95d642',
+    };
+    var res = await http.get(url, headers: headers);
+    return res;
+  }
+
+  static Future<http.Response> DJData() async {
+    var url = Uri.parse(
+        'https://newapi.mzhapi.com//index/video/search?page=1&limit=2000');
+    var headers = {
+      'appid': 'wx2636fa16ff27c34c',
+      'channel-id': 'dciwpk',
+    };
+    var res = await http.get(url, headers: headers);
+    return res;
+  }
+}

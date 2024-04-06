@@ -1,4 +1,4 @@
-// ignore_for_file: depend_on_referenced_packages
+// ignore_for_file: depend_on_referenced_packages, deprecated_member_use
 
 import 'dart:ui';
 
@@ -36,7 +36,7 @@ class _HomeState extends State<Home> {
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                 child: BottomNavigationBar(
                   type: BottomNavigationBarType.fixed, // 适配多个按钮
-                  backgroundColor: Colors.black.withOpacity(0.5),
+                  backgroundColor: Colors.black.withOpacity(0.8),
                   key: _bottomNavigationKey,
                   currentIndex: _page,
                   elevation: 0,
@@ -49,7 +49,9 @@ class _HomeState extends State<Home> {
                         'assets/svgs/lsjl.svg',
                         width: 30,
                         height: 30,
-                        color: _page == 0 ? Colors.white : Colors.white38,
+                        color: _page == 0
+                            ? const Color.fromARGB(255, 233, 173, 255)
+                            : Colors.white38,
                       ),
                       label: '',
                     ),
@@ -58,7 +60,9 @@ class _HomeState extends State<Home> {
                         'assets/svgs/home.svg',
                         width: 30,
                         height: 30,
-                        color: _page == 1 ? Colors.white : Colors.white38,
+                        color: _page == 1
+                            ? const Color.fromARGB(255, 233, 173, 255)
+                            : Colors.white38,
                       ),
                       label: '',
                     ),
@@ -67,7 +71,9 @@ class _HomeState extends State<Home> {
                         'assets/svgs/mine.svg',
                         width: 30,
                         height: 30,
-                        color: _page == 2 ? Colors.white : Colors.white38,
+                        color: _page == 2
+                            ? const Color.fromARGB(255, 233, 173, 255)
+                            : Colors.white38,
                       ),
                       label: '',
                     ),
@@ -84,7 +90,7 @@ class _HomeState extends State<Home> {
           index: _page,
           children: <Widget>[
             Container(
-              color: Colors.white,
+              color: Colors.white10,
               child: Center(
                 child: Column(
                   children: <Widget>[

@@ -41,6 +41,17 @@ class _MainAppState extends State<MainApp> {
         brightness: Brightness.dark, // 亮色主题
         primaryColor: Colors.blue,
         scaffoldBackgroundColor: Colors.black, // 背景色
+        // AppBar 向上滑动后的背景
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+        ),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
       ),
       initialRoute: '/',
       routingCallback: (routing) {}, //路由回调
@@ -48,5 +59,3 @@ class _MainAppState extends State<MainApp> {
     );
   }
 }
-
-
