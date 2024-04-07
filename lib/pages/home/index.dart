@@ -75,21 +75,21 @@ class _HomePageState extends State<HomePage> {
       });
     });
     // 获取芳钟数据
-    HomeApi.FZData().then((value) {
-      setState(() {
-        data = [...data, ...jsonDecode(value.body)["data"]];
-      });
-      duplicateRemoval();
-      endFun?.refreshCompleted();
-    });
+    // HomeApi.FZData().then((value) {
+    //   setState(() {
+    //     data = [...data, ...jsonDecode(value.body)["data"]];
+    //   });
+    //   duplicateRemoval();
+    //   endFun?.refreshCompleted();
+    // });
     // 获取短剧数据
-    HomeApi.DJData().then((value) {
-      setState(() {
-        data = [...data, ...jsonDecode(value.body)["data"]];
-        duplicateRemoval();
-      });
-      endFun?.refreshCompleted();
-    });
+    // HomeApi.DJData().then((value) {
+    //   setState(() {
+    //     data = [...data, ...jsonDecode(value.body)["data"]];
+    //     duplicateRemoval();
+    //   });
+    //   endFun?.refreshCompleted();
+    // });
   }
 
   String loadImage(dynamic item) {
@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage> {
             enablePullDown: true, // 下拉刷新
             controller: _refreshController,
             onRefresh: _onRefresh,
-            child: StaggeredGridView.countBuilder(
+            child: MasonryGridView.count(
               padding: EdgeInsets.only(
                   top: appBarHeight + statusBarHeight + 5,
                   left: 5,
@@ -168,8 +168,6 @@ class _HomePageState extends State<HomePage> {
                       )),
                 );
               },
-              staggeredTileBuilder: (int index) =>
-                  const StaggeredTile.fit(1), // 固定宽高
             ),
           ),
           Positioned(
@@ -275,7 +273,6 @@ class _CartItemState extends State<CartItem> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     // 监听组件的大小
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -296,19 +293,21 @@ class _CartItemState extends State<CartItem> {
       constraints: const BoxConstraints(minHeight: 300),
       height: widget.item['height'],
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: const Color.fromARGB(52, 248, 248, 248),
         borderRadius: BorderRadius.circular(6),
         // 最小高度
       ),
       child: Stack(
         children: [
-          Builder(builder: (context) {
-            return CachedNetworkImage(
+          Center(
+            child: CachedNetworkImage(
               imageUrl: widget.imageUrl, // 包含图片.jpg .png 等后缀
               fit: BoxFit.cover,
               width: double.infinity,
-            );
-          }),
+              fadeOutDuration: const Duration(milliseconds: 50),
+              fadeInDuration: const Duration(milliseconds: 50),
+            ),
+          ),
           Positioned(
             bottom: 0,
             left: 0,

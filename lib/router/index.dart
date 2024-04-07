@@ -1,4 +1,4 @@
-// ignore_for_file: depend_on_referenced_packages
+// ignore_for_file: depend_on_referenced_packages, prefer_const_constructors
 
 import 'package:get/get.dart';
 
@@ -13,7 +13,7 @@ class AppPages {
     ),
     GetPage(
       name: '/video',
-      page: () => const VideoPage(),
+      page: () => VideoPage(),
       transition: Transition.fadeIn,
     ),
   ];
