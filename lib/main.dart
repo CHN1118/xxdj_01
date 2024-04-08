@@ -9,6 +9,7 @@ import 'package:get_storage/get_storage.dart';
 import 'router/index.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
   Get.put(Controller());
   // 锁定竖屏

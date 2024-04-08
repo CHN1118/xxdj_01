@@ -29,7 +29,6 @@ class _HomePageState extends State<HomePage> {
   double _offset = 0;
 
   @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -47,7 +46,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void deactivate() {
-    // TODO: implement deactivate
     super.deactivate();
     _scrollController.dispose();
   }
@@ -75,21 +73,21 @@ class _HomePageState extends State<HomePage> {
       });
     });
     // 获取芳钟数据
-    // HomeApi.FZData().then((value) {
-    //   setState(() {
-    //     data = [...data, ...jsonDecode(value.body)["data"]];
-    //   });
-    //   duplicateRemoval();
-    //   endFun?.refreshCompleted();
-    // });
+    HomeApi.FZData().then((value) {
+      setState(() {
+        data = [...data, ...jsonDecode(value.body)["data"]];
+      });
+      duplicateRemoval();
+      endFun?.refreshCompleted();
+    });
     // 获取短剧数据
-    // HomeApi.DJData().then((value) {
-    //   setState(() {
-    //     data = [...data, ...jsonDecode(value.body)["data"]];
-    //     duplicateRemoval();
-    //   });
-    //   endFun?.refreshCompleted();
-    // });
+    HomeApi.DJData().then((value) {
+      setState(() {
+        data = [...data, ...jsonDecode(value.body)["data"]];
+        duplicateRemoval();
+      });
+      endFun?.refreshCompleted();
+    });
   }
 
   String loadImage(dynamic item) {
@@ -290,7 +288,7 @@ class _CartItemState extends State<CartItem> {
   Widget build(BuildContext context) {
     return Container(
       key: _containerKey,
-      constraints: const BoxConstraints(minHeight: 300),
+      constraints: const BoxConstraints(minHeight: 260),
       height: widget.item['height'],
       decoration: BoxDecoration(
         color: const Color.fromARGB(52, 248, 248, 248),

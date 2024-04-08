@@ -6,6 +6,6 @@ import 'package:get_storage/get_storage.dart';
 final box = GetStorage();
 
 class Controller extends GetxController {
-  bool isLogin = false;
+  bool isLogin = false.obs.value;
   var language = '中文'.obs;
 }

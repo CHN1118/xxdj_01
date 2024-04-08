@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -88,31 +89,28 @@ class _HomeState extends State<Home> {
         ),
         body: IndexedStack(
           index: _page,
-          children: <Widget>[
-            Container(
-              color: Colors.white10,
-              child: Center(
-                child: Column(
-                  children: <Widget>[
-                    Text(_page.toString(), textScaleFactor: 10.0),
-                    ElevatedButton(
-                      child: Text('Go To Page of index 1'),
-                      onPressed: () {
-                        final BottomNavigationBar navigationBar =
-                            _bottomNavigationKey.currentWidget
-                                as BottomNavigationBar;
-                        navigationBar.onTap!(1);
-                      },
-                    )
-                  ],
-                ),
+          children: const <Widget>[
+            Center(
+              child: Text(
+                '历史记录😯',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
             HomePage(),
             Center(
-              child: Text('Compare'),
+              child: Text(
+                '我的😯',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ));
   }
 }
+
+// onPressed: () {
+// final BottomNavigationBar navigationBar =
+// _bottomNavigationKey.currentWidget
+// as BottomNavigationBar;
+// navigationBar.onTap!(1);
+// }
