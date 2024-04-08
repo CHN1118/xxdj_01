@@ -29,7 +29,6 @@ class _HomePageState extends State<HomePage> {
   double _offset = 0;
 
   @override
-
   @override
   void initState() {
     super.initState();
@@ -70,23 +69,23 @@ class _HomePageState extends State<HomePage> {
           duplicateRemoval();
           endFun?.refreshCompleted();
         });
+        // 获取芳钟数据
+        HomeApi.FZData().then((value) {
+          setState(() {
+            data = [...data, ...jsonDecode(value.body)["data"]];
+          });
+          duplicateRemoval();
+          endFun?.refreshCompleted();
+        });
+        // 获取短剧数据
+        HomeApi.DJData().then((value) {
+          setState(() {
+            data = [...data, ...jsonDecode(value.body)["data"]];
+            duplicateRemoval();
+          });
+          endFun?.refreshCompleted();
+        });
       });
-    });
-    // 获取芳钟数据
-    HomeApi.FZData().then((value) {
-      setState(() {
-        data = [...data, ...jsonDecode(value.body)["data"]];
-      });
-      duplicateRemoval();
-      endFun?.refreshCompleted();
-    });
-    // 获取短剧数据
-    HomeApi.DJData().then((value) {
-      setState(() {
-        data = [...data, ...jsonDecode(value.body)["data"]];
-        duplicateRemoval();
-      });
-      endFun?.refreshCompleted();
     });
   }
 

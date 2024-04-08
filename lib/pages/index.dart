@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'home/index.dart';
 
@@ -82,6 +83,7 @@ class _HomeState extends State<Home> {
                   onTap: (index) {
                     setState(() {
                       _page = index;
+                      GetStorage().remove('history');
                     });
                   },
                 )),
