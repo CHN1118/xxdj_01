@@ -119,7 +119,6 @@ class _VideoPageState extends State<VideoPage> {
         orElse: () => null);
     if (item != null) {
       print(item);
-      print(item);
       _pageController = PageController(initialPage: item?["index"] ?? 0);
     }
     print('获取观看记录');
@@ -139,7 +138,7 @@ class _VideoPageState extends State<VideoPage> {
           // 页面翻页后的回调
           onPageChanged: (index) {
             setHistory();
-            print('翻页 $index');
+            print('翻页 ${index + 1} ');
           },
           scrollDirection: Axis.vertical,
           // 禁止滑动
@@ -300,38 +299,6 @@ class _VideoBodyState extends State<VideoBody> {
     videoUrl = widget.url["mp4_url"] ??
         widget.url["video_url"] ??
         widget.url["video_src"];
-    // 倒计时1秒后监听
-    Future.delayed(const Duration(milliseconds: 500), () {
-      Controller.addJavaScriptHandler(
-          handlerName: 'videoEnded',
-          callback: (args) {
-            if (widget.onEnd != null) {
-              widget.onEnd!();
-            }
-          });
-      Controller.addJavaScriptHandler(
-          handlerName: 'videoPlay',
-          callback: (args) {
-            setState(() {
-              titles = false;
-            });
-          });
-      Controller.addJavaScriptHandler(
-          handlerName: 'videoPause',
-          callback: (args) {
-            setState(() {
-              titles = true;
-            });
-          });
-      Controller.addJavaScriptHandler(
-          handlerName: 'isShow',
-          callback: (args) {
-            print(12312);
-            setState(() {
-              isShow = true;
-            });
-          });
-    });
     // 启动闪烁定时器
     _timer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
       setState(() {
@@ -340,9 +307,40 @@ class _VideoBodyState extends State<VideoBody> {
     });
   }
 
+  // 监听
+  void addjavasddd() {
+    Controller.addJavaScriptHandler(
+        handlerName: 'videoEnded',
+        callback: (args) {
+          if (widget.onEnd != null) {
+            widget.onEnd!();
+          }
+        });
+    Controller.addJavaScriptHandler(
+        handlerName: 'videoPlay',
+        callback: (args) {
+          setState(() {
+            titles = false;
+          });
+        });
+    Controller.addJavaScriptHandler(
+        handlerName: 'videoPause',
+        callback: (args) {
+          setState(() {
+            titles = true;
+          });
+        });
+    Controller.addJavaScriptHandler(
+        handlerName: 'isShow',
+        callback: (args) {
+          setState(() {
+            isShow = true;
+          });
+        });
+  }
+
   @override
   dispose() {
-    //
     print('组件销毁');
     Controller.evaluateJavascript(
         source: "document.querySelector('video').pause();");
@@ -373,7 +371,6 @@ class _VideoBodyState extends State<VideoBody> {
                         supportZoom: false, // 禁止缩放
                         mediaPlaybackRequiresUserGesture: false, // 媒体播放需要用户手势
                       ),
-                      ios: IOSInAppWebViewOptions(),
                     ),
                     initialSettings: InAppWebViewSettings(
                       allowsInlineMediaPlayback: true, // 允许内联媒体播放
@@ -385,24 +382,7 @@ class _VideoBodyState extends State<VideoBody> {
                       print(errorResponse);
                       widget.reData!();
                     },
-                    onCreateWindow: (controller, createWindowAction) async {
-                      setState(() {
-                        Controller = controller;
-                        isShow = false;
-                      });
-                      controller.evaluateJavascript(source: """
-                        var html = document.querySelector('html');
-                        var body = document.querySelector('body');
-                        html.style.background = 'black';
-                        body.style.background = 'black';
-                        """);
-                      return null;
-                    },
-                    onContentSizeChanged: (controller, width, height) async {
-                      setState(() {
-                        Controller = controller;
-                      });
-                      // 错误处理
+                    onPageCommitVisible: (controller, url) async {
                       controller.evaluateJavascript(source: """
                     var html = document.querySelector('html')
                     var body = document.querySelector('body');
@@ -419,9 +399,10 @@ class _VideoBodyState extends State<VideoBody> {
                     video.classList.remove('audio');
                     video.classList.remove('media-document');
                     video.style.width = '100%';
-                    video.style.height = '100%';
+                    // video.style.height = '100%';
                     //最小高度
-                    video.style.minHeight = '100vh';
+                    html.style.height = '100vh';
+                    body.style.height = '100vh';
                     video.setAttribute('webkit-playsinline', 'true');
                     video.setAttribute('playsinline', 'true');
                     video.setAttribute('x5-video-player-type', 'true');
@@ -441,8 +422,8 @@ class _VideoBodyState extends State<VideoBody> {
                     });                    
                     // 视频播放区域双击
                     video.addEventListener('dblclick', function() {
-                      video.webkitRequestFullScreen();
-                      video.controls = true;
+                      // video.webkitRequestFullScreen();
+                      // video.controls = true;
                     });
                     // 视频播放监听
                     video.addEventListener('play', function() {
@@ -452,13 +433,13 @@ class _VideoBodyState extends State<VideoBody> {
                     video.addEventListener('pause', function() {
                       window.flutter_inappwebview.callHandler('videoPause');
                     });
-                    
                     """);
                     },
-                    onWebViewCreated: (controller) {
+                    onWebViewCreated: (controller) async {
                       setState(() {
                         Controller = controller;
                       });
+                      addjavasddd();
                     },
                   ),
                 ),
@@ -496,11 +477,12 @@ class _VideoBodyState extends State<VideoBody> {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      color: Colors.black.withOpacity(1),
+                    child: Container(
+                      color: Colors.black,
                       child: const Center(
-                        child: CupertinoActivityIndicator(),
+                        child: CupertinoActivityIndicator(
+                          radius: 20,
+                        ),
                       ),
                     ),
                   )

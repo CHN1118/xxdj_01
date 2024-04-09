@@ -22,10 +22,10 @@ void main() async {
   ]);
   // 禁止全屏
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-  // 这种模式显示状态栏
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-// 修改状态栏颜色(只能黑和白)
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+//   // 这种模式显示状态栏
+//   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+// // 修改状态栏颜色(只能黑和白)
+//   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   runApp(const MainApp());
 }
 

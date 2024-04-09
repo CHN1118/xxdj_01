@@ -69,23 +69,23 @@ class _HomePageState extends State<HomePage> {
           ];
           duplicateRemoval();
           endFun?.refreshCompleted();
+          // 获取芳钟数据
+          HomeApi.FZData().then((value) {
+            setState(() {
+              data = [...data, ...jsonDecode(value.body)["data"]];
+            });
+            duplicateRemoval();
+            endFun?.refreshCompleted();
+          });
+          // 获取短剧数据
+          HomeApi.DJData().then((value) {
+            setState(() {
+              data = [...data, ...jsonDecode(value.body)["data"]];
+              duplicateRemoval();
+            });
+            endFun?.refreshCompleted();
+          });
         });
-        // 获取芳钟数据
-        // HomeApi.FZData().then((value) {
-        //   setState(() {
-        //     data = [...data, ...jsonDecode(value.body)["data"]];
-        //   });
-        //   duplicateRemoval();
-        //   endFun?.refreshCompleted();
-        // });
-        // 获取短剧数据
-        // HomeApi.DJData().then((value) {
-        //   setState(() {
-        //     data = [...data, ...jsonDecode(value.body)["data"]];
-        //     duplicateRemoval();
-        //   });
-        //   endFun?.refreshCompleted();
-        // });
       });
     });
   }
@@ -150,8 +150,8 @@ class _HomePageState extends State<HomePage> {
             controller: _refreshController,
             onRefresh: _onRefresh,
             child: MasonryGridView.count(
-              physics:
-                  data.isEmpty ? const NeverScrollableScrollPhysics() : null,
+              // physics:
+              //     data.isEmpty ? const NeverScrollableScrollPhysics() : null,
               padding: EdgeInsets.only(
                   top: appBarHeight + statusBarHeight + 5,
                   left: 5,
