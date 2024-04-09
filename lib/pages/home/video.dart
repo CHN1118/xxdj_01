@@ -301,7 +301,7 @@ class _VideoBodyState extends State<VideoBody> {
         widget.url["video_url"] ??
         widget.url["video_src"];
     // 倒计时1秒后监听
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       Controller.addJavaScriptHandler(
           handlerName: 'videoEnded',
           callback: (args) {
