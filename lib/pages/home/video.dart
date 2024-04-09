@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -97,7 +98,7 @@ class _VideoPageState extends State<VideoPage> {
       "data": data["tv_name"] ?? data["title"],
       "image": data["tv_image"] ?? data["vertical_cover"] ?? data["cover_url"],
       "time": time,
-      "index": _pageController.page?.toInt(),
+      "index": _pageController.page!.toInt() + 1,
     };
     // 如果观看记录中已经有这个视频，就删除
     (history).removeWhere((element) =>
@@ -291,6 +292,7 @@ class _VideoBodyState extends State<VideoBody> {
   List<bool> _visibleList = [true, false];
   Timer? _timer;
   bool titles = false;
+  bool isShow = false;
 
   @override
   void initState() {
@@ -299,7 +301,7 @@ class _VideoBodyState extends State<VideoBody> {
         widget.url["video_url"] ??
         widget.url["video_src"];
     // 倒计时1秒后监听
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       Controller.addJavaScriptHandler(
           handlerName: 'videoEnded',
           callback: (args) {
@@ -321,6 +323,14 @@ class _VideoBodyState extends State<VideoBody> {
               titles = true;
             });
           });
+      Controller.addJavaScriptHandler(
+          handlerName: 'isShow',
+          callback: (args) {
+            print(12312);
+            setState(() {
+              isShow = true;
+            });
+          });
     });
     // 启动闪烁定时器
     _timer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
@@ -332,7 +342,8 @@ class _VideoBodyState extends State<VideoBody> {
 
   @override
   dispose() {
-    print(2434);
+    //
+    print('组件销毁');
     Controller.evaluateJavascript(
         source: "document.querySelector('video').pause();");
     Controller.dispose();
@@ -367,12 +378,21 @@ class _VideoBodyState extends State<VideoBody> {
                     initialSettings: InAppWebViewSettings(
                       allowsInlineMediaPlayback: true, // 允许内联媒体播放
                       mediaPlaybackRequiresUserGesture: false, // 媒体播放需要用户手势
-                      underPageBackgroundColor: Colors.black,
+                      underPageBackgroundColor: Colors.black, // 页面背景色
                     ),
                     onReceivedHttpError:
                         (controller, request, errorResponse) async {
                       print(errorResponse);
                       widget.reData!();
+                    },
+                    onCreateWindow: (controller, createWindowAction) async {
+                      controller.evaluateJavascript(source: """
+                        var html = document.querySelector('html');
+                        var body = document.querySelector('body');
+                        html.style.background = 'black';
+                        body.style.background = 'black';
+                        """);
+                      return null;
                     },
                     onContentSizeChanged: (controller, width, height) async {
                       setState(() {
@@ -396,6 +416,8 @@ class _VideoBodyState extends State<VideoBody> {
                     video.classList.remove('media-document');
                     video.style.width = '100%';
                     video.style.height = '100%';
+                    //最小高度
+                    video.style.minHeight = '100vh';
                     video.setAttribute('webkit-playsinline', 'true');
                     video.setAttribute('playsinline', 'true');
                     video.setAttribute('x5-video-player-type', 'true');
@@ -407,6 +429,7 @@ class _VideoBodyState extends State<VideoBody> {
                     video.addEventListener('loadeddata', function() {
                       // 视频加载完成后，隐藏加载动画
                       video.controls = false; 
+                       window.flutter_inappwebview.callHandler('isShow');
                     });
                     // 视频父组件监听
                     video.parentNode.addEventListener('click', function(e) {
@@ -425,6 +448,7 @@ class _VideoBodyState extends State<VideoBody> {
                     video.addEventListener('pause', function() {
                       window.flutter_inappwebview.callHandler('videoPause');
                     });
+                    
                     """);
                     },
                     onWebViewCreated: (controller) {
@@ -462,6 +486,20 @@ class _VideoBodyState extends State<VideoBody> {
                     ),
                   ),
                 ),
+                if (!isShow)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 100),
+                      color: Colors.black.withOpacity(1),
+                      child: const Center(
+                        child: CupertinoActivityIndicator(),
+                      ),
+                    ),
+                  )
               ],
             ),
           ),
@@ -481,6 +519,8 @@ class _VideoBodyState extends State<VideoBody> {
                       Controller.evaluateJavascript(
                           source:
                               "document.querySelector('video').playbackRate = 2;");
+                      // 震动
+                      HapticFeedback.lightImpact();
                     },
                     onLongPressEnd: (details) {
                       setState(() {

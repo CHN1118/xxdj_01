@@ -1,4 +1,4 @@
-// ignore_for_file: depend_on_referenced_packages, prefer_typing_uninitialized_variables, prefer_final_fields, avoid_print, no_leading_underscores_for_local_identifiers, must_be_immutable
+// ignore_for_file: depend_on_referenced_packages, prefer_typing_uninitialized_variables, prefer_final_fields, avoid_print, no_leading_underscores_for_local_identifiers, must_be_immutable, non_constant_identifier_names
 
 import 'dart:convert';
 import 'dart:ui';
@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,24 +71,33 @@ class _HomePageState extends State<HomePage> {
           endFun?.refreshCompleted();
         });
         // 获取芳钟数据
-        HomeApi.FZData().then((value) {
-          setState(() {
-            data = [...data, ...jsonDecode(value.body)["data"]];
-          });
-          duplicateRemoval();
-          endFun?.refreshCompleted();
-        });
+        // HomeApi.FZData().then((value) {
+        //   setState(() {
+        //     data = [...data, ...jsonDecode(value.body)["data"]];
+        //   });
+        //   duplicateRemoval();
+        //   endFun?.refreshCompleted();
+        // });
         // 获取短剧数据
-        HomeApi.DJData().then((value) {
-          setState(() {
-            data = [...data, ...jsonDecode(value.body)["data"]];
-            duplicateRemoval();
-          });
-          endFun?.refreshCompleted();
-        });
+        // HomeApi.DJData().then((value) {
+        //   setState(() {
+        //     data = [...data, ...jsonDecode(value.body)["data"]];
+        //     duplicateRemoval();
+        //   });
+        //   endFun?.refreshCompleted();
+        // });
       });
     });
   }
+
+  var ShimHL = [
+    280.0,
+    300.0,
+    250.0,
+    290.0,
+    300.0,
+    270.0,
+  ];
 
   String loadImage(dynamic item) {
     var imageUrl =
@@ -139,6 +149,8 @@ class _HomePageState extends State<HomePage> {
             controller: _refreshController,
             onRefresh: _onRefresh,
             child: MasonryGridView.count(
+              physics:
+                  data.isEmpty ? const NeverScrollableScrollPhysics() : null,
               padding: EdgeInsets.only(
                   top: appBarHeight + statusBarHeight + 5,
                   left: 5,
@@ -149,8 +161,23 @@ class _HomePageState extends State<HomePage> {
               crossAxisCount: 2,
               mainAxisSpacing: 5,
               crossAxisSpacing: 5,
-              itemCount: data.length,
+              itemCount: data.isEmpty ? 6 : data.length,
               itemBuilder: (context, index) {
+                if (data.isEmpty) {
+                  return SizedBox(
+                    width: 200.0,
+                    height: ShimHL[index],
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.grey.withOpacity(.5),
+                      highlightColor: Colors.white.withOpacity(.4),
+                      child: Container(
+                          decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(.5),
+                        borderRadius: BorderRadius.circular(6),
+                      )),
+                    ),
+                  );
+                }
                 // 倒计时1秒
                 return GestureDetector(
                   onTap: () {
