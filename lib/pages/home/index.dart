@@ -113,6 +113,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onRefresh() async {
+    data = [];
     getData(endFun: _refreshController);
     print(data.length);
   }
