@@ -388,6 +388,7 @@ class _VideoBodyState extends State<VideoBody> {
                     onCreateWindow: (controller, createWindowAction) async {
                       setState(() {
                         Controller = controller;
+                        isShow = false;
                       });
                       controller.evaluateJavascript(source: """
                         var html = document.querySelector('html');
