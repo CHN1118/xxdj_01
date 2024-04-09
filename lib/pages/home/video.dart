@@ -386,6 +386,9 @@ class _VideoBodyState extends State<VideoBody> {
                       widget.reData!();
                     },
                     onCreateWindow: (controller, createWindowAction) async {
+                      setState(() {
+                        Controller = controller;
+                      });
                       controller.evaluateJavascript(source: """
                         var html = document.querySelector('html');
                         var body = document.querySelector('body');
