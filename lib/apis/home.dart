@@ -22,6 +22,9 @@ class HomeApi {
       return HomeApi.QHToken(
           sing: jsonDecode(res.body)["error"]["message"].split('is: ')[1]);
     } else {
+      var token = jsonDecode(res.body)["data"]["accessToken"];
+      GetStorage box = GetStorage(); // 实例化存储
+      box.write('token', token);
       return res;
     }
   }

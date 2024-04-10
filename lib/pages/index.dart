@@ -22,72 +22,59 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    const color = Color.fromARGB(212, 255, 255, 255);
     return Scaffold(
         // 去掉底部导航栏的阴影
         extendBody: true,
         extendBodyBehindAppBar: true,
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                  color: Colors.white54.withOpacity(0.25), width: 0.5),
-            ),
-          ),
-          child: ClipRect(
-            child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: BottomNavigationBar(
-                  type: BottomNavigationBarType.fixed, // 适配多个按钮
-                  backgroundColor: Colors.black.withOpacity(0.8),
-                  key: _bottomNavigationKey,
-                  currentIndex: _page,
-                  elevation: 0,
-                  iconSize: 30,
-                  selectedFontSize: 0,
-                  unselectedFontSize: 0,
-                  items: <BottomNavigationBarItem>[
-                    BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        'assets/svgs/lsjl.svg',
-                        width: 30,
-                        height: 30,
-                        color: _page == 0
-                            ? const Color.fromARGB(255, 233, 173, 255)
-                            : Colors.white38,
-                      ),
-                      label: '',
+        bottomNavigationBar: ClipRect(
+          child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: BottomNavigationBar(
+                type: BottomNavigationBarType.fixed, // 适配多个按钮
+                backgroundColor: Colors.black.withOpacity(0.96),
+                key: _bottomNavigationKey,
+                currentIndex: _page,
+                elevation: 0,
+                iconSize: 30,
+                selectedFontSize: 0,
+                unselectedFontSize: 0,
+                items: <BottomNavigationBarItem>[
+                  BottomNavigationBarItem(
+                    icon: SvgPicture.asset(
+                      'assets/svgs/lsjl.svg',
+                      width: _page == 0 ? 30 : 26,
+                      height: _page == 0 ? 30 : 26,
+                      color: _page == 0 ? color : Colors.white38,
                     ),
-                    BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        'assets/svgs/home.svg',
-                        width: 30,
-                        height: 30,
-                        color: _page == 1
-                            ? const Color.fromARGB(255, 233, 173, 255)
-                            : Colors.white38,
-                      ),
-                      label: '',
+                    label: '',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: SvgPicture.asset(
+                      'assets/svgs/home.svg',
+                      width: _page == 1 ? 30 : 26,
+                      height: _page == 1 ? 30 : 26,
+                      color: _page == 1 ? color : Colors.white38,
                     ),
-                    BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        'assets/svgs/mine.svg',
-                        width: 30,
-                        height: 30,
-                        color: _page == 2
-                            ? const Color.fromARGB(255, 233, 173, 255)
-                            : Colors.white38,
-                      ),
-                      label: '',
+                    label: '',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: SvgPicture.asset(
+                      'assets/svgs/mine.svg',
+                      width: _page == 2 ? 30 : 26,
+                      height: _page == 2 ? 30 : 26,
+                      color: _page == 2 ? color : Colors.white38,
                     ),
-                  ],
-                  onTap: (index) {
-                    setState(() {
-                      _page = index;
-                      GetStorage().remove('history');
-                    });
-                  },
-                )),
-          ),
+                    label: '',
+                  ),
+                ],
+                onTap: (index) {
+                  setState(() {
+                    _page = index;
+                    GetStorage().remove('history');
+                  });
+                },
+              )),
         ),
         body: IndexedStack(
           index: _page,
