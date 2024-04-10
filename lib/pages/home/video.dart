@@ -202,15 +202,19 @@ class _VideoPageState extends State<VideoPage> {
                             child: Container(
                               width: MediaQuery.of(context).size.width - 140,
                               // color: Colors.black.withOpacity(0.5),
-                              child: Text(
-                                '《 ${data["tv_name"] ?? data["title"] ?? ''} 》',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w600,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 200),
+                                opacity: isShows ? 0.2 : 0.8,
+                                child: Text(
+                                  '《 ${data["tv_name"] ?? data["title"] ?? ''} 》',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
