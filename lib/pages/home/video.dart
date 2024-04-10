@@ -229,6 +229,9 @@ class _VideoPageState extends State<VideoPage> {
                           Expanded(
                             child: GestureDetector(
                               onLongPress: () {
+                                if (length == 200) {
+                                  return;
+                                }
                                 setState(() {
                                   js = true;
                                 });
@@ -248,6 +251,9 @@ class _VideoPageState extends State<VideoPage> {
                                 HapticFeedback.lightImpact();
                               },
                               onLongPressEnd: (details) {
+                                if (length == 200) {
+                                  return;
+                                }
                                 setState(() {
                                   js = false;
                                 });
@@ -336,16 +342,49 @@ class _VideoPageState extends State<VideoPage> {
                                                     ),
                                                   ),
                                                   Expanded(
-                                                    child: Text(
-                                                      '更新至 $length 集',
-                                                      style: TextStyle(
-                                                          color: Colors.white
-                                                              .withOpacity(0.8),
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.w600),
-                                                    ),
-                                                  )
+                                                      child: Row(
+                                                    children: [
+                                                      Text(
+                                                        '更新至',
+                                                        style: TextStyle(
+                                                            color: Colors.white
+                                                                .withOpacity(
+                                                                    0.8),
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600),
+                                                      ),
+                                                      if (length != 200)
+                                                        Text(
+                                                          '$length',
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withOpacity(
+                                                                      0.8),
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600),
+                                                        )
+                                                      else
+                                                        const CupertinoActivityIndicator(
+                                                          radius: 8,
+                                                        ),
+                                                      Text(
+                                                        '集',
+                                                        style: TextStyle(
+                                                            color: Colors.white
+                                                                .withOpacity(
+                                                                    0.8),
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600),
+                                                      ),
+                                                    ],
+                                                  ))
                                                 ],
                                               ),
                                       ),
@@ -377,6 +416,9 @@ class _VideoPageState extends State<VideoPage> {
                           //选择集数
                           GestureDetector(
                             onTap: () {
+                              if (length == 200) {
+                                return;
+                              }
                               setState(() {
                                 isXj = true;
                               });
