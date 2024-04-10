@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -193,7 +192,10 @@ class _HomePageState extends State<HomePage> {
                 }
                 return GestureDetector(
                   onTap: () {
-                    Get.toNamed('/video', arguments: data[index]);
+                    Get.toNamed('/video', arguments: {
+                      "data": data[index],
+                      "image": loadImage(data[index])
+                    });
                   },
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(6),
