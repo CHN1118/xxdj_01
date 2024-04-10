@@ -1,6 +1,8 @@
-// ignore_for_file: depend_on_referenced_packages, prefer_typing_uninitialized_variables, prefer_final_fields, avoid_print, no_leading_underscores_for_local_identifiers, must_be_immutable, non_constant_identifier_names
+// ignore_for_file: depend_on_referenced_packages, prefer_typing_uninitialized_variables, prefer_final_fields, avoid_print, no_leading_underscores_for_local_identifiers, must_be_immutable, non_constant_identifier_names, deprecated_member_use, unused_local_variable, empty_catches
 
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -22,21 +24,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   GetStorage box = GetStorage(); // 实例化存储
-  var data = [];
-  var token;
-  ScrollController _scrollController = ScrollController();
+  var data = []; // 数据
+  var token; // token
+  ScrollController _scrollController = ScrollController(); // 滚动控制器
   RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
-  double _offset = 0;
+      RefreshController(initialRefresh: false); // 下拉刷新控制器
+  double _offset = 0; // 滚动距离
+  int count = 10;
 
-  @override
   @override
   void initState() {
     super.initState();
-    setState(() {
-      token = box.read('token');
-    });
-    getData();
+    getData(); // 获取数据
     _scrollController.addListener(() {
       setState(() {
         _offset = _scrollController.offset;
@@ -46,48 +45,40 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void deactivate() {
-    super.deactivate();
     _scrollController.dispose();
+    _refreshController.dispose();
+    super.deactivate();
   }
 
-  void getData({dynamic endFun}) {
+  Future<void> getData({RefreshController? endFun}) async {
+    await HomeApi.QHToken(); // 获取token
+    setState(() {
+      token = box.read('token');
+    });
     // 获取青禾数据
-    HomeApi.QHToken().then((value) {
-      // 存储token
-      box.write('token', jsonDecode(value.body)["data"]["accessToken"]);
+    await HomeApi.QHData(token: token).then((value) {
       setState(() {
-        token = jsonDecode(value.body)["data"]["accessToken"];
-      });
-      HomeApi.QHData(token: jsonDecode(value.body)["data"]["accessToken"])
-          .then((value) {
-        setState(() {
-          data = [
-            ...data,
-            ...jsonDecode(value.body)["data"]["videoList"],
-            ...jsonDecode(value.body)["data"]["dataList"],
-            ...jsonDecode(value.body)["data"]["swiperList"],
-          ];
-          duplicateRemoval();
-          endFun?.refreshCompleted();
-          // 获取芳钟数据
-          HomeApi.FZData().then((value) {
-            setState(() {
-              data = [...data, ...jsonDecode(value.body)["data"]];
-            });
-            duplicateRemoval();
-            endFun?.refreshCompleted();
-          });
-          // 获取短剧数据
-          HomeApi.DJData().then((value) {
-            setState(() {
-              data = [...data, ...jsonDecode(value.body)["data"]];
-              duplicateRemoval();
-            });
-            endFun?.refreshCompleted();
-          });
-        });
+        data = [
+          ...data,
+          ...jsonDecode(value.body)["data"]["videoList"],
+          ...jsonDecode(value.body)["data"]["dataList"],
+          ...jsonDecode(value.body)["data"]["swiperList"],
+        ];
       });
     });
+    // 获取芳钟数据
+    HomeApi.FZData().then((value) {
+      setState(() {
+        data = [...data, ...jsonDecode(value.body)["data"]];
+      });
+    });
+    // 获取短剧数据
+    HomeApi.DJData().then((value) {
+      setState(() {
+        data = [...data, ...jsonDecode(value.body)["data"]];
+      });
+    });
+    endFun?.refreshCompleted();
   }
 
   var ShimHL = [
@@ -96,6 +87,10 @@ class _HomePageState extends State<HomePage> {
     250.0,
     290.0,
     300.0,
+    270.0,
+    270.0,
+    270.0,
+    270.0,
     270.0,
   ];
 
@@ -107,27 +102,32 @@ class _HomePageState extends State<HomePage> {
       // 如果是图片 URL，直接返回 Image.network
       return imageUrl;
     } else {
+      if (item["tv_name"] == '大圣归来') {
+        return 'https://n.sinaimg.cn/transform/20150805/JTnn-fxfpqxf0207416.jpg';
+      }
       // 如果不是图片 URL，返回默认照片
       return 'https://ts1.cn.mm.bing.net/th/id/R-C.c080d2ec112dcd89c3f45e243381c6e3?rik=tPyoq5Tzr3w1Zw&riu=http%3a%2f%2fwww.sucaijishi.com%2fuploadfile%2f2017%2f0510%2f20170510104939937.jpg%3fimageMogr2%2fformat%2fjpg%2fblur%2f1x0%2fquality%2f60&ehk=6SSZzYZrUHwwpIyAexpPAcYNKnzCViNeAl6U7CQgFYE%3d&risl=&pid=ImgRaw&r=0';
     }
   }
 
-  void _onRefresh() async {
-    data = [];
+  void _onRefresh() {
+    print('刷新');
+    setState(() {
+      data = [];
+    });
     getData(endFun: _refreshController);
-    print(data.length);
   }
 
-  void duplicateRemoval() {
-    //根据id和title判断去掉重复数据 保留最新数据 使用遍历的方式
-    for (var i = 0; i < data.length; i++) {
-      for (var j = i + 1; j < data.length; j++) {
-        if (data[i]["id"] == data[j]["id"] &&
-            data[i]["title"] == data[j]["title"]) {
-          data.removeAt(j);
-        }
+  void _onLoading() {
+    print('加载');
+    setState(() {
+      if ((count + 10) > data.length) {
+        count = data.length;
+      } else {
+        count = count + 10;
       }
-    }
+    });
+    _refreshController.loadComplete();
   }
 
   String checkTitle(dynamic item) {
@@ -136,22 +136,34 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // super.build(context);
     double appBarHeight = AppBar().preferredSize.height; // appBar 高度
     double statusBarHeight = MediaQuery.of(context).padding.top; // 状态栏高度
     double bottomBarHeight = MediaQuery.of(context).padding.bottom; // 底部导航栏高度
 
     return Scaffold(
-      backgroundColor: Colors.white10,
+      backgroundColor: Color.fromARGB(42, 255, 255, 255),
       body: Stack(
         children: [
           SmartRefresher(
-            enablePullDown: true, // 下拉刷新
+            enablePullDown: true,
+            enablePullUp: true,
             controller: _refreshController,
             onRefresh: _onRefresh,
+            onLoading: _onLoading,
+            footer: const ClassicFooter(
+              loadingText: '加载中...',
+              idleText: '上拉加载',
+              noDataText: '没有更多数据了',
+              failedText: '加载失败',
+              canLoadingText: '松开加载更多',
+              loadStyle: LoadStyle.ShowWhenLoading,
+              textStyle: TextStyle(color: Colors.white),
+            ),
+            header: const WaterDropHeader(
+              complete: Text('刷新完成'),
+              failed: Text('刷新失败'),
+            ),
             child: MasonryGridView.count(
-              // physics:
-              //     data.isEmpty ? const NeverScrollableScrollPhysics() : null,
               padding: EdgeInsets.only(
                   top: appBarHeight + statusBarHeight + 5,
                   left: 5,
@@ -162,7 +174,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisCount: 2,
               mainAxisSpacing: 5,
               crossAxisSpacing: 5,
-              itemCount: data.isEmpty ? 6 : data.length,
+              itemCount: count,
               itemBuilder: (context, index) {
                 if (data.isEmpty) {
                   return SizedBox(
@@ -179,7 +191,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 }
-                // 倒计时1秒
                 return GestureDetector(
                   onTap: () {
                     Get.toNamed('/video', arguments: data[index]);
@@ -206,12 +217,7 @@ class _HomePageState extends State<HomePage> {
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.8),
-                      border: Border(
-                        bottom: BorderSide(
-                            color: Colors.white54.withOpacity(0.25),
-                            width: 0.5),
-                      ),
+                      color: Colors.black.withOpacity(0.96),
                     ),
                     child: Padding(
                         padding: EdgeInsets.only(
@@ -224,29 +230,40 @@ class _HomePageState extends State<HomePage> {
                                   print('点击了搜索');
                                 },
                                 child: Container(
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20)),
-                                  child: Row(
-                                    children: [
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 13),
-                                        child: SvgPicture.asset(
-                                          'assets/svgs/search.svg',
-                                          width: 20,
-                                          height: 20,
+                                  padding: const EdgeInsets.only(
+                                      top: 12, bottom: 12),
+                                  // color: Colors.pink,
+                                  height: double.infinity,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(20)),
+                                    child: Row(
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10),
+                                          child: SvgPicture.asset(
+                                              'assets/svgs/search.svg',
+                                              width: 17,
+                                              height: 17,
+                                              color:
+                                                  Colors.white.withOpacity(.5)),
                                         ),
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          '搜索',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      )
-                                    ],
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8),
+                                          child: Text(
+                                            '搜索',
+                                            style: TextStyle(
+                                                color: Colors.white
+                                                    .withOpacity(.5),
+                                                fontSize: 14),
+                                          ),
+                                        )
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -258,13 +275,13 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // 回到顶部按钮
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500),
-            right: _offset > 100 ? 10 : -100, // 根据滚动距离判断是否显示按钮
+            right: _offset > 100 ? 10 : -100,
             bottom: 10 + bottomBarHeight,
             child: FloatingActionButton(
-              backgroundColor: Colors.black.withOpacity(0.8),
+              mini: true,
+              backgroundColor: Colors.black.withOpacity(0.85),
               elevation: 10,
               shape: const CircleBorder(),
               onPressed: () {
@@ -272,7 +289,12 @@ class _HomePageState extends State<HomePage> {
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeInOut);
               },
-              child: const Icon(Icons.arrow_upward),
+              child: SvgPicture.asset(
+                'assets/svgs/gotop.svg',
+                width: 20,
+                height: 20,
+                color: Colors.white.withOpacity(.5),
+              ),
             ),
           )
         ],
@@ -299,24 +321,27 @@ class _CartItemState extends State<CartItem> {
   @override
   void initState() {
     super.initState();
-    // 监听组件的大小
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        final RenderBox renderBox =
-            _containerKey.currentContext!.findRenderObject() as RenderBox;
-        final size = renderBox.size;
-        widget.item['height'] = size.height;
-        setState(() {});
+    if (widget.item?['height'] == null) {
+      Timer.periodic(const Duration(milliseconds: 300), (timer) {
+        if (_containerKey.currentContext?.findRenderObject() != null &&
+            widget.item?['height'] == null) {
+          final RenderBox renderBox =
+              _containerKey.currentContext?.findRenderObject() as RenderBox;
+          final size = renderBox.size;
+          if (size.height != 0 && widget.item?['height'] == null) {
+            widget.item['height'] = size.height;
+            timer.cancel();
+          }
+        }
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      key: _containerKey,
-      constraints: const BoxConstraints(minHeight: 260),
-      height: widget.item['height'],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 100),
+      constraints: BoxConstraints(minHeight: widget.item['height'] ?? 300),
       decoration: BoxDecoration(
         color: const Color.fromARGB(52, 248, 248, 248),
         borderRadius: BorderRadius.circular(6),
@@ -326,6 +351,7 @@ class _CartItemState extends State<CartItem> {
         children: [
           Center(
             child: CachedNetworkImage(
+              key: _containerKey,
               imageUrl: widget.imageUrl, // 包含图片.jpg .png 等后缀
               fit: BoxFit.cover,
               width: double.infinity,
@@ -343,7 +369,7 @@ class _CartItemState extends State<CartItem> {
                 child: Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: Center(
-                    child: Text(widget.title,
+                    child: Text('${widget.title}',
                         style:
                             const TextStyle(color: Colors.white, fontSize: 14)),
                   ),
