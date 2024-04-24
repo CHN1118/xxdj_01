@@ -340,7 +340,7 @@ class _CartItemState extends State<CartItem> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 0),
       constraints: BoxConstraints(minHeight: widget.item['height'] ?? 300),
       decoration: BoxDecoration(
         color: const Color.fromARGB(52, 248, 248, 248),
