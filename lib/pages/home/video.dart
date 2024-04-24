@@ -27,11 +27,8 @@ class _VideoPageState extends State<VideoPage> {
   List<bool> _visibleList = [true, false];
   bool js = false;
   bool isShows = false;
-  int index = -1;
-  var _timer;
   var videoData = [];
   var data;
-  String image = '';
   void _addData() {
     for (var i = 0; i < 200; i++) {
       videoData.add(i);
@@ -50,6 +47,7 @@ class _VideoPageState extends State<VideoPage> {
       // 如果不是最后一集，就播放下一集
       await _pageController.nextPage(
           duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      setHistory(); // 存储观看记录
     }
   }
 
@@ -58,13 +56,12 @@ class _VideoPageState extends State<VideoPage> {
     super.initState();
     _addData(); // 添加数据
     setState(() {
-      data = Get.arguments["data"]; // 获取传递过来的数据
-      image = Get.arguments["image"];
+      data = Get.arguments; // 获取传递过来的数据
     });
     getHistory();
     GetData(); // 获取数据
     // 启动闪烁定时器
-    _timer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+    Timer.periodic(const Duration(milliseconds: 800), (timer) {
       setState(() {
         _visibleList.insert(0, _visibleList.removeLast());
       });
@@ -94,7 +91,7 @@ class _VideoPageState extends State<VideoPage> {
   bool isXj = false;
   var _index = 0;
   // 存储观看记录到本地
-  void setHistory(int i) {
+  void setHistory() {
     GetStorage storage = GetStorage();
     var history = storage.read('history') ?? [];
     var time = DateTime.now().millisecondsSinceEpoch;
@@ -103,7 +100,7 @@ class _VideoPageState extends State<VideoPage> {
       "data": data["tv_name"] ?? data["title"],
       "image": data["tv_image"] ?? data["vertical_cover"] ?? data["cover_url"],
       "time": time,
-      "index": i,
+      "index": _pageController.page!.toInt() + 1,
     };
     // 如果观看记录中已经有这个视频，就删除
     (history).removeWhere((element) =>
@@ -117,13 +114,12 @@ class _VideoPageState extends State<VideoPage> {
   void getHistory() {
     GetStorage storage = GetStorage();
     var history = storage.read('history') ?? [];
-    var data = Get.arguments["data"];
+    var data = Get.arguments;
     var item = (history).firstWhere(
         (element) =>
             element["id"] == '${data["id"] ?? data["tv_id"] ?? data["_id"]}',
         orElse: () => null);
     if (item != null) {
-      index = item?["index"] ?? 0;
       print(item);
       _pageController = PageController(initialPage: item?["index"] ?? 0);
       setState(() {
@@ -135,16 +131,32 @@ class _VideoPageState extends State<VideoPage> {
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _timer.cancel();
     super.dispose();
+    _pageController.dispose();
   }
 
   void isShow(InAppWebViewController c) {
     setState(() {
       isShows = true;
+      dontphysics = false;
       Controller = c;
     });
+  }
+
+  bool dontphysics = false;
+
+  void touchmove() {
+    setState(() {
+      dontphysics = true;
+    });
+    print(dontphysics);
+  }
+
+  void touchend() {
+    setState(() {
+      dontphysics = false;
+    });
+    print(dontphysics);
   }
 
   @override
@@ -152,35 +164,36 @@ class _VideoPageState extends State<VideoPage> {
     // 获取顶部状态栏高度
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     return Scaffold(
-      body: PageView(
-          controller: _pageController,
-          // 页面翻页后的回调
-          onPageChanged: (index) {
-            setState(() {
-              isShows = false;
-            });
-            setHistory();
-            print('翻页 ${index + 1} ');
-          },
-          scrollDirection: Axis.vertical,
-          // 禁止滑动
-          physics: isXj
-              ? const NeverScrollableScrollPhysics()
-              : const AlwaysScrollableScrollPhysics(),
-          children: videoData.map<Widget>((item) {
-            // 如果item是数字，就返回一个Container
-            var index = videoData.indexOf(item);
-            var length = videoData.length;
-            return Stack(
-              children: [
-                Column(
+      body: Stack(
+        children: [
+          PageView(
+              controller: _pageController,
+              // 页面翻页后的回调
+              onPageChanged: (index) {
+                setState(() {
+                  isShows = false;
+                  _index = index;
+                });
+                setHistory();
+                print('翻页 ${index + 1} ');
+              },
+              scrollDirection: Axis.vertical,
+              // 禁止滑动
+              physics: (isXj || dontphysics)
+                  ? const NeverScrollableScrollPhysics() //
+                  : const AlwaysScrollableScrollPhysics(),
+              children: videoData.map<Widget>((item) {
+                // 如果item是数字，就返回一个Container
+                var index = videoData.indexOf(item);
+                var length = videoData.length;
+                return Stack(
                   children: [
-                    SizedBox(height: statusBarHeight),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          if (item is! int)
-                            VideoBody(
+                    Stack(
+                      children: [
+                        if (item is! int)
+                          Padding(
+                            padding: EdgeInsets.only(top: statusBarHeight),
+                            child: VideoBody(
                               url: item,
                               index: index,
                               length: length,
@@ -188,397 +201,402 @@ class _VideoPageState extends State<VideoPage> {
                               onEnd: handleVideoPlay,
                               reData: GetData,
                               isShow: isShow,
+                              touchmove: touchmove,
+                              touchend: touchend,
                             ),
-                          if (!isShows)
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                color: Colors.black,
-                                child: const Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
+                          ),
+                        if (!isShows)
                           Positioned(
-                            top: 2,
-                            left: 70,
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
                             child: Container(
-                              width: MediaQuery.of(context).size.width - 140,
-                              // color: Colors.black.withOpacity(0.5),
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 200),
-                                opacity: isShows ? 0.2 : 0.8,
-                                child: Text(
-                                  '《 ${data["tv_name"] ?? data["title"] ?? ''} 》',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              color: Colors.black,
+                              child: const Center(
+                                child: CupertinoActivityIndicator(
+                                  radius: 14,
                                 ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
-                    Container(
-                      height: 110,
-                      // color: Colors.pink,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        mainAxisSize: MainAxisSize.max,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onLongPress: () {
-                                if (length == 200) {
-                                  return;
-                                }
-                                setState(() {
-                                  js = true;
-                                });
-                                // 如果暂停 就播放
-                                Controller.evaluateJavascript(
-                                    source:
-                                        "document.querySelector('video').play();");
-                                // 隐藏控件
-                                Controller.evaluateJavascript(
-                                    source:
-                                        "document.querySelector('video').controls = false;");
-                                // 开启2倍速
-                                Controller.evaluateJavascript(
-                                    source:
-                                        "document.querySelector('video').playbackRate = 2;");
-                                // 震动
-                                HapticFeedback.lightImpact();
-                              },
-                              onLongPressEnd: (details) {
-                                if (length == 200) {
-                                  return;
-                                }
-                                setState(() {
-                                  js = false;
-                                });
-                                Controller.evaluateJavascript(
-                                    source:
-                                        "document.querySelector('video').playbackRate = 1;");
-                              },
-                              child: Container(
-                                // color: Colors.pink,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 20),
-                                  child: Column(
-                                    children: [
-                                      SizedBox(
-                                        height: 40,
-                                        child: js
-                                            ? Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Text(
-                                                    '2倍加速中',
-                                                    style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.9),
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  AnimatedOpacity(
-                                                    duration: const Duration(
-                                                        milliseconds: 800),
-                                                    opacity: _visibleList[0]
-                                                        ? 1.0
-                                                        : 0.0,
-                                                    child: SvgPicture.asset(
-                                                      'assets/svgs/jia.svg',
-                                                      width: 18,
-                                                      height: 18,
-                                                      color: Colors.white
-                                                          .withOpacity(0.9),
-                                                    ),
-                                                  ),
-                                                  AnimatedOpacity(
-                                                    duration: const Duration(
-                                                        milliseconds: 800),
-                                                    opacity: _visibleList[1]
-                                                        ? 1.0
-                                                        : 0.0,
-                                                    child: SvgPicture.asset(
-                                                      'assets/svgs/jia.svg',
-                                                      width: 18,
-                                                      height: 18,
-                                                      color: Colors.white
-                                                          .withOpacity(0.9),
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            : Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Text(
-                                                    '第 ${index + 1} 集',
-                                                    style: TextStyle(
-                                                        color: Colors.white
-                                                            .withOpacity(0.9),
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  ),
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            8.0),
-                                                    child: Container(
-                                                      height: 20,
-                                                      width: 1,
-                                                      color: Colors.white
-                                                          .withOpacity(1),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                      child: Row(
-                                                    children: [
-                                                      Text(
-                                                        '更新至',
-                                                        style: TextStyle(
-                                                            color: Colors.white
-                                                                .withOpacity(
-                                                                    0.8),
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w600),
-                                                      ),
-                                                      if (length != 200)
-                                                        Text(
-                                                          '$length',
-                                                          style: TextStyle(
-                                                              color: Colors
-                                                                  .white
-                                                                  .withOpacity(
-                                                                      0.8),
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600),
-                                                        )
-                                                      else
-                                                        const CupertinoActivityIndicator(
-                                                          radius: 8,
-                                                        ),
-                                                      Text(
-                                                        '集',
-                                                        style: TextStyle(
-                                                            color: Colors.white
-                                                                .withOpacity(
-                                                                    0.8),
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w600),
-                                                      ),
-                                                    ],
-                                                  ))
-                                                ],
-                                              ),
-                                      ),
-                                      Expanded(
-                                        child: js
-                                            ? const SizedBox()
-                                            : SizedBox(
-                                                width: double.infinity,
-                                                child: Text(
-                                                  '>>长按此处加速播放>>',
-                                                  style: TextStyle(
-                                                    color: Colors.white
-                                                        .withOpacity(0.13),
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                      )
-                                    ],
+                    if (isXj)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            setState(() {
+                              isXj = false;
+                              Controller.evaluateJavascript(
+                                  source:
+                                      "document.querySelector('video').play();");
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            padding: EdgeInsets.only(
+                              top: MediaQuery.of(context).size.height / 5,
+                              bottom: MediaQuery.of(context).size.height / 3.9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isXj
+                                  ? Colors.black.withOpacity(.8)
+                                  : Colors.transparent,
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  child: Text(
+                                    '《 ${data["tv_name"] ?? data["title"]} 》',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
+                                Expanded(
+                                  child: GridView.builder(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 5, // 横轴三个子widget
+                                      childAspectRatio: 1.6, // 宽高比为1时，子widget
+                                    ),
+                                    itemCount: length,
+                                    itemBuilder: (context, i) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          _pageController.jumpToPage(i);
+                                          setState(() {
+                                            isXj = false;
+                                          });
+                                        },
+                                        child: Container(
+                                          alignment: Alignment.center,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          child: Text(
+                                            '第 ${i + 1} 集',
+                                            maxLines: 1,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(
-                            width: 20,
-                          ),
-                          //选择集数
-                          GestureDetector(
-                            onTap: () {
-                              if (length == 200) {
-                                return;
-                              }
-                              setState(() {
-                                isXj = true;
-                              });
-                              //移除控件
-                              Controller.evaluateJavascript(
-                                  source:
-                                      "document.querySelector('video').controls = false;");
-                              Controller.evaluateJavascript(
-                                  source:
-                                      "document.querySelector('video').pause();");
-                            },
-                            child: js
-                                ? const SizedBox()
-                                : Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          '选集',
+                        ),
+                      ),
+                  ],
+                );
+              }).toList()),
+          Positioned(
+            top: 2 + statusBarHeight,
+            left: 70,
+            child: Container(
+              width: MediaQuery.of(context).size.width - 140,
+              // color: Colors.black.withOpacity(0.5),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isShows ? 0.2 : 0.8,
+                child: Text(
+                  '《 ${data["tv_name"] ?? data["title"] ?? ''} 》',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 110,
+              color: Colors.black,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onLongPress: () {
+                        if (videoData.length == 200) {
+                          return;
+                        }
+                        setState(() {
+                          js = true;
+                        });
+                        // 如果暂停 就播放
+                        Controller.evaluateJavascript(
+                            source: "document.querySelector('video').play();");
+                        // 隐藏控件
+                        Controller.evaluateJavascript(
+                            source:
+                                "document.querySelector('video').controls = false;");
+                        // 开启2倍速
+                        Controller.evaluateJavascript(
+                            source:
+                                "document.querySelector('video').playbackRate = 2;");
+                        // 震动
+                        HapticFeedback.lightImpact();
+                      },
+                      onLongPressEnd: (details) {
+                        if (videoData.length == 200) {
+                          return;
+                        }
+                        setState(() {
+                          js = false;
+                        });
+                        Controller.evaluateJavascript(
+                            source:
+                                "document.querySelector('video').playbackRate = 1;");
+                      },
+                      child: Container(
+                        // color: Colors.pink,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 40,
+                                child: js
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '2倍加速中',
+                                            style: TextStyle(
+                                              color:
+                                                  Colors.white.withOpacity(0.9),
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          AnimatedOpacity(
+                                            duration: const Duration(
+                                                milliseconds: 800),
+                                            opacity:
+                                                _visibleList[0] ? 1.0 : 0.0,
+                                            child: SvgPicture.asset(
+                                              'assets/svgs/jia.svg',
+                                              width: 18,
+                                              height: 18,
+                                              color:
+                                                  Colors.white.withOpacity(0.9),
+                                            ),
+                                          ),
+                                          AnimatedOpacity(
+                                            duration: const Duration(
+                                                milliseconds: 800),
+                                            opacity:
+                                                _visibleList[1] ? 1.0 : 0.0,
+                                            child: SvgPicture.asset(
+                                              'assets/svgs/jia.svg',
+                                              width: 18,
+                                              height: 18,
+                                              color:
+                                                  Colors.white.withOpacity(0.9),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '第 ${_index + 1} 集',
+                                            style: TextStyle(
+                                                color: Colors.white
+                                                    .withOpacity(0.9),
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Container(
+                                              height: 20,
+                                              width: 1,
+                                              color:
+                                                  Colors.white.withOpacity(1),
+                                            ),
+                                          ),
+                                          Expanded(
+                                              child: Row(
+                                            children: [
+                                              Text(
+                                                '更新至',
+                                                style: TextStyle(
+                                                    color: Colors.white
+                                                        .withOpacity(0.8),
+                                                    fontSize: 16,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                              if (videoData.length != 200)
+                                                Text(
+                                                  '${videoData.length}',
+                                                  style: TextStyle(
+                                                      color: Colors.white
+                                                          .withOpacity(0.8),
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                )
+                                              else
+                                                const CupertinoActivityIndicator(
+                                                  radius: 8,
+                                                ),
+                                              Text(
+                                                '集',
+                                                style: TextStyle(
+                                                    color: Colors.white
+                                                        .withOpacity(0.8),
+                                                    fontSize: 16,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            ],
+                                          ))
+                                        ],
+                                      ),
+                              ),
+                              Expanded(
+                                child: js
+                                    ? const SizedBox()
+                                    : SizedBox(
+                                        width: double.infinity,
+                                        child: Text(
+                                          '>>长按此处加速播放>>',
                                           style: TextStyle(
                                             color:
-                                                Colors.white.withOpacity(0.8),
-                                            fontSize: 14,
+                                                Colors.white.withOpacity(0.13),
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        const SizedBox(width: 5),
-                                        SvgPicture.asset(
-                                          'assets/svgs/xj.svg',
-                                          width: 30,
-                                          height: 30,
-                                          color: Colors.white.withOpacity(0.8),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                          ),
-                          const SizedBox(
-                            width: 30,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (isXj)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        setState(() {
-                          isXj = false;
-                          Controller.evaluateJavascript(
-                              source:
-                                  "document.querySelector('video').play();");
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: EdgeInsets.only(
-                          top: MediaQuery.of(context).size.height / 5,
-                          bottom: MediaQuery.of(context).size.height / 3.9,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isXj
-                              ? Colors.black.withOpacity(.8)
-                              : Colors.transparent,
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              child: Text(
-                                '《 ${data["tv_name"] ?? data["title"]} 》',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GridView.builder(
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 5, // 横轴三个子widget
-                                  childAspectRatio: 1.6, // 宽高比为1时，子widget
-                                ),
-                                itemCount: length,
-                                itemBuilder: (context, i) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      _pageController.jumpToPage(i);
-                                      setState(() {
-                                        isXj = false;
-                                      });
-                                    },
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      margin: const EdgeInsets.all(3),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(5),
                                       ),
-                                      child: Text(
-                                        '第 ${i + 1} 集',
-                                        maxLines: 1,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-              ],
-            );
-          }).toList()),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  //选择集数
+                  GestureDetector(
+                    onTap: () {
+                      if (videoData.length == 200) {
+                        return;
+                      }
+                      setState(() {
+                        isXj = true;
+                      });
+                      //移除控件
+                      Controller.evaluateJavascript(
+                          source:
+                              "document.querySelector('video').controls = false;");
+                      Controller.evaluateJavascript(
+                          source: "document.querySelector('video').pause();");
+                    },
+                    child: js
+                        ? const SizedBox()
+                        : Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '选集',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                SvgPicture.asset(
+                                  'assets/svgs/xj.svg',
+                                  width: 30,
+                                  height: 30,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                  const SizedBox(
+                    width: 30,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class VideoBody extends StatefulWidget {
   var url;
+  var index;
+  var length;
+  var title;
   Function? onEnd;
   Function? reData;
+  Function? xj;
   Function? isShow;
+  Function? touchmove;
+  Function? touchend;
 
   VideoBody({
     Key? key,
-    this.url,
+    required this.url,
+    required this.index,
+    required this.length,
     this.onEnd,
     this.reData,
+    this.title,
+    this.xj,
     this.isShow,
+    this.touchmove,
+    this.touchend,
   }) : super(key: key);
 
   @override
@@ -640,12 +658,6 @@ class _VideoBodyState extends State<VideoBody> {
         handlerName: 'touchend',
         callback: (args) {
           widget.touchend!();
-        });
-    Controller.addJavaScriptHandler(
-        handlerName: 'isYD',
-        callback: (args) {
-          print(args);
-          widget.isYD!(args[0]);
         });
   }
 
@@ -741,16 +753,49 @@ class _VideoBodyState extends State<VideoBody> {
                     video.addEventListener('pause', function() {
                       window.flutter_inappwebview.callHandler('videoPause');
                     });
+                    var startX, startY, deltaX, deltaY;
+                    // 监听页面横向拖动
+                    document.addEventListener('touchstart', function(e) {
+                       // 获取触摸起始点的坐标
+                      startX = e.touches[0].clientX;
+                      startY = e.touches[0].clientY;
+                    });
+                    document.addEventListener('touchmove', function(e) {
+                    // 获取触摸移动的坐标
+                    var touch = e.touches[0];
+                    deltaX = touch.clientX - startX;
+                    deltaY = touch.clientY - startY;
+
+                    // 判断是否是横向滑动
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                      // 横向滑动
+                      e.preventDefault(); // 防止页面滚动
+                      // 在这里触发横向滑动的操作
+                      console.log('横向滑动');
+                      window.flutter_inappwebview.callHandler('touchmove');
+                    }
+                  });
+                    // 监听页面横向拖动结束
+                    document.addEventListener('touchend', function(e) {
+                      window.flutter_inappwebview.callHandler('touchend');
+                      startX = startY = deltaX = deltaY = 0;
+                    });
                     """);
-        var html = await controller.getHtml();
-        print('sdfsd$html');
-      },
-      onWebViewCreated: (controller) async {
-        setState(() {
-          Controller = controller;
-        });
-        addjavasddd();
-      },
+            var html = await controller.getHtml();
+            print('$html');
+          },
+          onWebViewCreated: (controller) async {
+            setState(() {
+              Controller = controller;
+            });
+            addjavasddd();
+          },
+        ),
+        if (!isShowss)
+          Container(
+            color: Colors.black,
+          )
+      ],
     );
   }
 }
