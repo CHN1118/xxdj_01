@@ -2,7 +2,6 @@
 // ignore_for_file: unnecessary_import, depend_on_referenced_packages, avoid_print
 
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
